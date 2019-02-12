@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>flag.svg</file>
+        <file>mine.svg</file>
+        <file>bang.svg</file>
+        <file>gnomine.png</file>
+        <file>face-worried.svg</file>
+        <file>face-win.svg</file>
+        <file>face-smile.svg</file>
+        <file>face-cool.svg</file>
+        <file>face-sad.svg</file>
+    </qresource>
+</RCC>
