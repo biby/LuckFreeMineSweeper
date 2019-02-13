@@ -51,13 +51,13 @@ public:
     int emptyCell(int **mat, unsigned int ext, unsigned int rang, unsigned int** compconnexes, unsigned int* nombremeccomp, unsigned int nbconnectedcomponents, int* bombespossible);
     void findSolution(int **mat, unsigned int ext, unsigned int rang, unsigned int** compconnexes, unsigned int* nombremeccomp, unsigned int posext, unsigned int compmec, MineCell **bordext);
     unsigned int celldistance(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2) const;
+    unsigned int filterCells(MineCell ***listOfCellsFilteredPointer,bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
+    unsigned int countCells(bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
 
 private slots:
    void gameReset();
    void timeCount();
 private:
-    unsigned int filterCells(MineCell ***listOfCellsFilteredPointer,bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
-    unsigned int countCells(bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
 
     bool isSide(unsigned x,unsigned y) const;
     bool isCorner(unsigned x,unsigned y) const;

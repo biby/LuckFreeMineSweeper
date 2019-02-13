@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include <solver.h>
 using namespace std;
 
 MineCell::MineCell(int i,int j, MainWindow *w)
@@ -155,7 +156,8 @@ void MineCell::mouseReleaseEvent( QMouseEvent * event ){
         }
     }else if(event->button() == Qt::LeftButton){
         if(w->isUnclickedAndNeighborOfDisplayedCell(x(),y())){
-            w->luckRemover(x(),y());
+            Solver solve(w,x(),y());
+            solve.luckRemover();
         }
         if(!isClicked()){
             clickCell();
