@@ -38,12 +38,17 @@ private:
     unsigned int ** compconnexes;
     unsigned int * nombremeccomp;
     unsigned int * rankOfConnectedComponent;
-    int * connectedcomponentsrow;
+    unsigned int * connectedcomponentsrow;
     unsigned int nbcomp;
     bool *bombespossible;
     unsigned int *safesolution;
     bool foundsafesolution;
     unsigned int indexmec;
+    unsigned int nbbombstofree;
+    MineCell **listOfBombsToFree;
+    unsigned  nbbombstoset;
+    MineCell **listOfBombsToSet;
+
 
     void findClickedButtonIndex();
     void initializeMatrix();
@@ -52,6 +57,7 @@ private:
     void fillConnectedComponents();
     void possiblebombtester(unsigned int comptotest);
     void coutmap();
+    void findsafesolution();
 };
 
 #endif // SOLVER_H

@@ -135,14 +135,14 @@ void MineCell::mouseReleaseEvent( QMouseEvent * event ){
         w->clock->firstClick = true;
         w->startGame();
     }
-    char a[16];
+    char a[20];
     if(event->button() == Qt::RightButton){
         if(flag){
             setIcon(QIcon(""));
             flag = false;
             setClicked(false);
             w->nbflag--;
-            sprintf(a,"Bombes : %d/99",w->nbflag);
+            sprintf(a,"Bombes : %d/%d",w->nbflag,w->nbBombs);
             w->bombs->setText(tr(a));
         }else if(!isClicked()){
             //setStyleSheet("background-color: red;");

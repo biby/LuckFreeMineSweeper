@@ -28,7 +28,9 @@ MainWindow::MainWindow()
     reset->setIcon(QIcon("://face-smile.svg"));
     reset->setIconSize(QSize(32,32));
     reset->setText(tr("Nouveau"));
-    bombs = new QLabel(tr("Bombes : 0/99"));
+    char a[20];
+    sprintf(a,"Bombes : %d/%d",nbflag,nbBombs);
+    bombs = new QLabel(tr(a));
     menulayout->addWidget(bombs,2,Qt::AlignLeft);
     menulayout->addWidget(reset);
     menulayout->addWidget(clock->time,2,Qt::AlignRight);
@@ -267,112 +269,15 @@ void MainWindow::gameReset()
     clock->firstClick = false;
     clock->gameEnded = false;
     clock->time->setText(tr("Temps : 0 seconde"));
-    bombs->setText(tr("Bombes : 0/99"));
     nbflag = 0;
+    char a[20];
+    sprintf(a,"Bombes : %d/%d",nbflag,nbBombs);
+    bombs->setText(tr(a));
+
     tmps = 0;
     nbOfUnraveledCells = 0;
     nbOfLuckyGuesses = 0;
     nbOfForcedLuckyGuesses=0;
-}
-
-void MainWindow::findSolution(int **mat, unsigned int ext, unsigned int rang, unsigned int** compconnexes, unsigned int* nombremeccomp, unsigned int posext, unsigned int compmec, MineCell **bordext)
-{
-    unsigned int i,mectest,j,k,l,m;
-    int som;
-    bool test;
-    unsigned int nbbombes1 = 0;
-    for(i=0;i<nombremeccomp[compmec];i++){ //Counts the number of bombs in the connected component of mectest.
-        if(bordext[compconnexes[compmec][i]]->isBomb())
-        {//cellArray[bordext[compconnexes[compmec][i]]->x()][bordext[compconnexes[compmec][i]]->y()]->isBomb()){
-            nbbombes1++;
-        }
-    }
-    i= compmec; // I set i to compmec and then never change it. I   don"t know why.
-    unsigned int nbbombes2;
-    mectest = posext; //Same thing. Why do I do that?
-    m=0;
-    while(compconnexes[i][m]!=mectest) m++;
-    for(j=0;j<(((unsigned int) 1)<<(nombremeccomp[i]));j++){ // Generates all the bomb possibilities as a number (length in bits is the number of boxes, 1 if bomb, 0 if not a bomb for all but the place that has been clicked
-        //It is really bad to avoid the box of the guy and run things arround it...
-        test = true;
-        for(k=0;k<nombremeccomp[i];k++){ //tests if the generated solution is  a valid one.
-            if(compconnexes[i][k]<rang){
-                som = 0;
-                for(l=0;l<m;l++){
-                    som+=mat[compconnexes[i][k]][compconnexes[i][l]]*((j>>l)%2);
-                }
-                for(l=m+1;l<nombremeccomp[i];l++){
-                    som+=mat[compconnexes[i][k]][compconnexes[i][l]]*((j>>(l-1))%2);
-                }
-                if(som!=mat[compconnexes[i][k]][ext]){
-                    test = false;
-                    break;
-                }
-            }
-        }
-        if(test){ // if the solution is valid.
-            nbbombes2=0;
-            for(l=0;l<nombremeccomp[i]-1;l++){ //counts the number of bombs in the solution and store it in nbbombes2
-                if(((j>>l)%2)==1){
-                    nbbombes2++;
-                }
-            }
-            //Now it is going to change the board to the solution it found. Two options: either remove bombs or add some.
-            if(nbEmptyCells()>=abs(nbbombes2-nbbombes1)){ // I don't think this test makes sense with the abs.
-                int x = 0,y=0;
-                if(nbbombes2-nbbombes1>0){
-                    while(nbbombes2-nbbombes1>0){ //add bombs. Just read the board linearly and add bombs where it can
-                        y++;
-                        if(y%height ==0){ //Scans over the board, ugly way...
-                            y = 0;
-                            x++;
-                            x %=width;
-                        }
-                        if(!(cellArray[x][y]->isClicked())||cellArray[x][y]->isFlag()){
-                            if(nbOfFlagNeighbors(x,y)==nbOfClickedNeighbors(x,y) && !cellArray[x][y]->isBomb()){
-                                cellArray[x][y]->setBomb(true);
-                                nbbombes2--;
-                            }
-                            nbbombes1++;
-                        }
-                    }
-                }else if(nbbombes1-nbbombes2>0){ //remove bombs. Just read the board linearly and remove bombs where it can
-                    while(nbbombes1-nbbombes2>0){
-                        y++;
-                        if(y%height ==0){
-                            y = 0;
-                            x++;
-                            x %=width;
-                        }
-                        if(!(cellArray[x][y]->isClicked())||cellArray[x][y]->isFlag()){
-                            if(nbOfFlagNeighbors(x,y)==nbOfClickedNeighbors(x,y) && cellArray[x][y]->isBomb()){
-                                cellArray[x][y]->setBomb(false);
-                                nbbombes2++;
-                            }
-                            nbbombes1--;
-                        }
-                    }
-                }
-                //For the boxes in the connected components, set the board to the new solution
-                for(l=0;l<m;l++){
-                    if(((j>>l)%2)==1){
-                        bordext[compconnexes[i][l]]->setBomb(true);
-                    }else{
-                        bordext[compconnexes[i][l]]->setBomb(false);
-                    }
-                }
-                bordext[compconnexes[i][l]]->setBomb(false);
-                for(l=m+1;l<nombremeccomp[i];l++){
-                    if(((j>>(l-1))%2)==1){
-                        bordext[compconnexes[i][l]]->setBomb(true);
-                    }else{
-                        bordext[compconnexes[i][l]]->setBomb(false);
-                    }
-                }
-                return;
-            }
-        }
-    }
 }
 
 
@@ -410,7 +315,8 @@ unsigned int MainWindow::countCells(bool (MainWindow::*property)(unsigned int,un
 
 bool MainWindow::isUnclickedAndNeighborOfDisplayedCell(unsigned int i,unsigned int j) const
 {
-    if(!(cellArray[i][j]->isClicked()) && nbOfFlagNeighbors(i,j)!=nbOfClickedNeighbors(i,j)){
+    if(!(cellArray[i][j]->isClicked()) && nbOfFlagNeighbors(i,j)!=nbOfClickedNeighbors(i,j))
+    {
         return true;
     }
     return false;
@@ -437,6 +343,16 @@ bool MainWindow::isEmptyCell(unsigned int x, unsigned int y) const
         }
     }
     return false;
+}
+
+bool MainWindow::isEmptyBomb(unsigned int x, unsigned int y) const
+{
+    return cellArray[x][y]->isBomb() &&  isEmptyCell(x,y);
+}
+
+bool MainWindow::isEmptyFreeCell(unsigned int x, unsigned int y) const
+{
+    return !cellArray[x][y]->isBomb() &&  isEmptyCell(x,y);
 }
 
 int MainWindow::nbEmptyCells(){//Empty cell means that they are not next to a cell that is not clicked has not neighbors that have been clicked

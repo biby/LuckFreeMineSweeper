@@ -29,6 +29,8 @@ public:
     bool isUnclickedAndNeighborOfDisplayedCell(unsigned int i, unsigned int j) const;
     bool isDisplayedAndHasNonFlagNonDisplayedNeighbor(unsigned int i, unsigned int j) const;
     bool isEmptyCell(unsigned int x, unsigned int y) const;
+    bool isEmptyBomb(unsigned int x, unsigned int y) const;
+    bool isEmptyFreeCell(unsigned int x, unsigned int y) const;
     QLabel *bombs;
     Clock *clock;
     int nbOfUnraveledCells;
@@ -42,14 +44,11 @@ public:
     int nbEmptyCells();
     int numberOfUnclickedAndNeighborOfDisplayedCell();
     int numberOfCellsDisplayedAndHasNonFlagNonDisplayedNeighbor();
-    void luckRemover(unsigned int larg, unsigned int haut);
     MineCell ***cellArray;
     int nbOfLuckyGuesses;
     int nbOfForcedLuckyGuesses;
     QPushButton *reset;
     int tmps;
-    int emptyCell(int **mat, unsigned int ext, unsigned int rang, unsigned int** compconnexes, unsigned int* nombremeccomp, unsigned int nbconnectedcomponents, int* bombespossible);
-    void findSolution(int **mat, unsigned int ext, unsigned int rang, unsigned int** compconnexes, unsigned int* nombremeccomp, unsigned int posext, unsigned int compmec, MineCell **bordext);
     unsigned int celldistance(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2) const;
     unsigned int filterCells(MineCell ***listOfCellsFilteredPointer,bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
     unsigned int countCells(bool (MainWindow::*property)(unsigned int, unsigned int) const) const;
@@ -63,9 +62,6 @@ private:
     bool isCorner(unsigned x,unsigned y) const;
     unsigned int listOfNeighbors(MineCell ***neighborsListPointer, unsigned  int x, unsigned int y) const;
     unsigned int numberOfNeighbors(unsigned int x, unsigned int y) const;
-    unsigned int gauss(int **mat, unsigned int nbCol, unsigned int nbRow, MineCell **bordext, unsigned int &col) const; // Return rank of the matrix
-    void simplify(int **mat, unsigned int nbCol, unsigned int nbRow) const;
-    unsigned int fillConnectedComponents(int **mat, unsigned int rang, unsigned int nbOfUnclickedCellsOnTheBoundary, unsigned int ** compconnexes, unsigned int * nombremeccomp, unsigned int &compmec, unsigned int clickedButtonIndex) const;
 
 
 

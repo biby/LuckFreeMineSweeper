@@ -8,6 +8,8 @@
 Solver::Solver(MainWindow *w,unsigned int x, unsigned int y):w(w),clickedButtonX(x),clickedButtonY(y)
 {
     //Todo need to add access to CellArray
+    nbbombstofree=0;
+    nbbombstoset=0;
     nbOfClickedCellsOnTheBoundary = w->filterCells(&bordint, &MainWindow::isDisplayedAndHasNonFlagNonDisplayedNeighbor);
     nbOfUnclickedCellsOnTheBoundary = w->filterCells(&bordext, &MainWindow::isUnclickedAndNeighborOfDisplayedCell);
     findClickedButtonIndex();
@@ -39,6 +41,10 @@ Solver::~Solver()
     {
         delete safesolution;
     }
+    if(nbbombstofree>0)
+        delete listOfBombsToFree;
+    if(nbbombstoset>0)
+        delete listOfBombsToSet;
     delete connectedcomponentsrow; //Should a check be done to see if it exists?
 }
 
@@ -156,8 +162,8 @@ void Solver::fillConnectedComponents()
     bool isPlaced[nbOfUnclickedCellsOnTheBoundary];
     std::fill(isPlaced,isPlaced + nbOfUnclickedCellsOnTheBoundary,false);
 
-    connectedcomponentsrow = new int[rang];
-    std::fill(connectedcomponentsrow,connectedcomponentsrow+rang,-1);
+    connectedcomponentsrow = new unsigned int[rang];
+    std::fill(connectedcomponentsrow,connectedcomponentsrow+rang,rang);
     placedCells=0;
 
     while(placedCells<nbOfUnclickedCellsOnTheBoundary){
@@ -180,7 +186,7 @@ void Solver::fillConnectedComponents()
         while(k<nbmec){
             l=compconnexes[nbcomp][k];
             for(i=0;i<rang;i++){
-                if(connectedcomponentsrow[i]!=-1) continue;
+                if(connectedcomponentsrow[i]!=rang) continue;
                 if(mat[i][l]!=0)
                 {
                     connectedcomponentsrow[i]=nbcomp;
@@ -350,44 +356,14 @@ void Solver::possiblebombtester(unsigned int comptotest)
     bool test;
     int sum;
     unsigned int bombs[nombremeccomp[comptotest]];
-    //std::cout<< "Print connected component" << std::endl;
-    /*QColor color(rand()%256,rand()%256,rand()%256);
 
-    for(k=0;k<nombremeccomp[comptotest];k++)
-    {
-        QPalette pal = bordext[compconnexes[comptotest][k]]->palette();
-        pal.setColor(QPalette::Button, color);
-        bordext[compconnexes[comptotest][k]]->setAutoFillBackground(true);
-        bordext[compconnexes[comptotest][k]]->setPalette(pal);
-        bordext[compconnexes[comptotest][k]]->update();
-    }*/
-    /*for(unsigned int line=0;line<rang;++line)
-    {
-        if(connectedcomponentsrow[line]!=comptotest)
-        {
-            continue;
-        }
-        for(k=0;k<nombremeccomp[comptotest];k++)
-        {
-            std::cout << mat[line][compconnexes[comptotest][k]] << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << rankOfConnectedComponent[comptotest] << std::endl;
-    std::cout << pow(2,(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest])) << " " << (1<<(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest])) << std::endl;
-    if(pow(2,(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest])) != (1<<(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest])))
-    {
-        throw "blob";
-    }*/
-    for(j=0;j<(1<<(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest]));j++)
+    for(j=0;j<(((unsigned int) 1)<<(nombremeccomp[comptotest]-rankOfConnectedComponent[comptotest]));j++)
     {
         std::fill(bombs,bombs+rankOfConnectedComponent[comptotest],0);
         for(k=rankOfConnectedComponent[comptotest];k<nombremeccomp[comptotest];k++)
         {
             bombs[k]=((j>>(k-rankOfConnectedComponent[comptotest]))%2);
-            std::cout << bombs[k] << " ";
         }
-        std:: cout << std::endl;
         test = true;
         for(unsigned int line=0;line<rang;++line)
         {
@@ -405,14 +381,12 @@ void Solver::possiblebombtester(unsigned int comptotest)
             {
                 k=0;
                 while(compconnexes[comptotest][k]!=line && k<rankOfConnectedComponent[comptotest]) k++;
-                if(k>=rankOfConnectedComponent[comptotest]) throw "error";
                 bombs[k]=1;
             }
             else if(sum==0)
             {
                 k=0;
                 while(compconnexes[comptotest][k]!=line && k<rankOfConnectedComponent[comptotest]) k++;
-                if(k>=rankOfConnectedComponent[comptotest]) throw "error";
                 bombs[k]=0;
             }
             else
@@ -440,7 +414,6 @@ void Solver::possiblebombtester(unsigned int comptotest)
             }
         }
     }
-    std:: cout << std::endl;
 }
 
 void Solver::coutmap()
@@ -470,32 +443,64 @@ void Solver::coutmap()
     std::cout << std::endl;
 }
 
+void Solver::findsafesolution()
+{
+    MineCell ** freeCells;
+    unsigned int nbFreeCells = w->filterCells(&freeCells,&MainWindow::isEmptyFreeCell);
+    MineCell ** freeBombs;
+    unsigned int nbFreeBombs = w->filterCells(&freeBombs,&MainWindow::isEmptyBomb);
+    if(foundsafesolution)
+    {
+        unsigned int nbbombsafesolution=0;
+        unsigned int nbbombcurrentcompmec = 0;
+        for(unsigned int i=0;i<nombremeccomp[compmec];++i)
+        {
+            if(bordext[compconnexes[compmec][i]]->isBomb()) nbbombcurrentcompmec++;
+            nbbombsafesolution+=safesolution[i];
+        }
+        if(nbbombsafesolution==nbbombcurrentcompmec)
+        {
+            delete freeBombs;
+            delete freeCells;
+        }
+        else if(nbbombsafesolution<nbbombcurrentcompmec && nbFreeBombs+nbbombsafesolution>nbbombcurrentcompmec)
+        {
+            listOfBombsToFree = freeBombs;
+            delete freeCells;
+        }
+        else if(nbbombsafesolution>nbbombcurrentcompmec && nbbombsafesolution<nbbombcurrentcompmec+nbFreeCells)
+        {
+            listOfBombsToFree = freeCells;
+            delete freeBombs;
+        }
+        else
+        {
+            //Maybe further check to find a solution
+            w->nbBombs +=nbbombsafesolution;
+            w->nbBombs -=nbbombcurrentcompmec;
+        }
+    }
+
+}
+
 void Solver::luckRemover()
 {
-    unsigned int i,k,l;
-    // On fait un gauss
+    unsigned int l;
+    //Apply a Gauss transformation to the adjacency matrix
     gauss();
-    coutmap();
 
     //Computes the connected components. Sets compmec and indexmec.
     fillConnectedComponents();
 
-    /*for(i=0;i<nbOfUnclickedCellsOnTheBoundary;i++)
-    {
-        if(bordext[i]->isBomb())
-        {
-            bombespossible[i]=true;
-        }
-        else
-        {
-            bombespossible[i]=false;
-        }
-    }*/
-
+    //Fill up the list of cells that can potentially contain a bomb. First just check for the component containing the clicked cell.
     possiblebombtester(compmec);
-
-    if(bombespossible[clickedButtonIndex] && foundsafesolution)//The clicked place is identify as potentially containing a bomb
+    if(bombespossible[clickedButtonIndex]==false)
     {
+        return;
+    }
+    if(foundsafesolution)//The clicked place is identify as potentially containing a bomb
+    {
+
         for(unsigned int comp=0;comp<nbcomp;++comp) //Filling up the other connected components to check if there is a safe cell.
         {
             if(comp!=compmec)
@@ -503,6 +508,9 @@ void Solver::luckRemover()
                 possiblebombtester(comp);
             }
         }
+
+        findsafesolution();
+
         bool forcedguess=true;
         unsigned int safecell;
         for(safecell=0;safecell<nbOfUnclickedCellsOnTheBoundary;safecell++)// Look for a safe cell.
@@ -513,13 +521,15 @@ void Solver::luckRemover()
                 break;
             }
         }
-        if(forcedguess && foundsafesolution)//If there were no safecells;
+        if(forcedguess)//If there were no safecells;
         {
             w->nbOfForcedLuckyGuesses++;
             std::cout << "Forced luck!"<<std::endl;
             if(bordext[clickedButtonIndex]->isBomb())
             {
                 std::cout<<"There was a mine!"<<std::endl;
+
+
                 for(l=0;l<nombremeccomp[compmec];l++) //Should do something so the number of mines stay constant.
                 {
                     if(safesolution[l]==1)
@@ -529,6 +539,15 @@ void Solver::luckRemover()
                         bordext[compconnexes[compmec][l]]->setBomb(false);
                     }
                 }
+                for(l=0;l<nbbombstofree;++l)
+                {
+                    listOfBombsToFree[l]->setBomb(false);
+                }
+                for(l=0;l<nbbombstoset;++l)
+                {
+                    listOfBombsToSet[l]->setBomb(true);
+                }
+
             }
 
         }
